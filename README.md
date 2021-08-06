@@ -1,5 +1,5 @@
 # PTV_fdw
 
-PostgreSQL Foreign Data Wrapper for JSON data from Digi- ja väestötietovirasto, Palvelutietovaranto API.
+PostgreSQL Foreign Data Wrapper JSON-muotoiselle Digi- ja väestötietoviraston palvelutietovaranto APIlle.
 
-Inspired greatly by [geofdw](https://github.com/bosth/geofdw) and [snowplow_fdw](https://github.com/GispoCoding/snowplow_fdw).
+Inspiraationa ovat toimineet [geofdw](https://github.com/bosth/geofdw) ja [snowplow_fdw](https://github.com/GispoCoding/snowplow_fdw).
