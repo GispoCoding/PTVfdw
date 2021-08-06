@@ -78,9 +78,15 @@ class ptvForeignDataWrapper(ForeignDataWrapper):
                 self.log("ptv FDW: Invalid JSON content")
                 ret = {'id': None, 'timestamp': None, 'coords': None, 'events': None}
                 yield ret
+        # TOISTAISEKSI AINUT PTV APIIN LIITTYVA EHTO
         elif "/GetCountryCodes" in self.urlop:
-            for item in data:
-                ret = {'code': item['code']}
+            try:
+                for item in data:
+                    ret = {'code': item['code']}
+                    yield ret
+            except KeyError:
+                self.log("ptv FDW: Invalid JSON content")
+                ret = {'id': None, 'timestamp': None, 'coords': None, 'events': None}
                 yield ret
         else:
             for item in data:
