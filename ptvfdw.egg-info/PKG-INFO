@@ -1,0 +1,11 @@
+Metadata-Version: 1.0
+Name: ptvfdw
+Version: 0.0.1
+Summary: PostgreSQL foreign data wrapper for json data from PTV
+Home-page: https://github.com/GispoCoding/ptv_fdw
+Author: Pauliina Mäkinen
+Author-email: pauliina@gispo.fi
+License: UNKNOWN
+Description: PostgreSQL foreign data wrapper for json data from PTV
+Keywords: gis geographical postgis fdw ptv postgresql
+Platform: any
