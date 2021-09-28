@@ -41,17 +41,8 @@ class ptvForeignDataWrapper(ForeignDataWrapper):
 
     def execute(self, quals, columns):
         data = self.get_data(quals, columns)
-        # ENSIMMAINEN PTV APIIN LIITTYVA TESTI
-        if "/GetCountryCodes" in self.urlop:
-            try:
-                for item in data:
-                    ret = {'code': item['code']}
-                    yield ret
-            except KeyError:
-                self.log("ptv FDW: Invalid JSON content")
-                ret = {'code': None}
-                yield ret
-        elif "/GetMunicipalityCodes" in self.urlop:
+        # Kuntakoodit
+        if "/GetMunicipalityCodes" in self.urlop:
             try:
                 for item in data:
                     ret = {}
@@ -60,7 +51,6 @@ class ptvForeignDataWrapper(ForeignDataWrapper):
                     except KeyError:
                         self.log("ptv FDW: Invalid JSON content")
                         ret.update({'code': None})
-                    # try:
                     nimet = [(j['value']) for j in item['names']]
                     kielet = [(j['language']) for j in item['names']]
                     for k in range(len(kielet)):
@@ -70,118 +60,79 @@ class ptvForeignDataWrapper(ForeignDataWrapper):
                             ret.update({'names_sv': nimet[k]})
                         elif kielet[k] == "en":
                             ret.update({'names_en': nimet[k]})
-                        # ret.update({'names': list(set([j['value'] for j in item['names']]))})
-                        # ret.update({'names': list(set([(j['language'] + ":" + j['value']) for j in item['names']]))})
-                    # except KeyError:
-                    # self.log("ptv FDW: Invalid JSON content")
-                    # ret.update({'namesFi': None, 'namesSv': None, 'namesEng': None})
                     yield ret
             except KeyError:
                 self.log("ptv FDW: Invalid JSON content")
                 ret = {'code': None, 'names_fi': None, 'names_sv': None, 'names_en': None}
                 yield ret
-        elif "/Organization" in self.urlop and len(self.urlop) < 65:
-            try:
-                for item in data['itemList']:
-                    ret = {'org_id': item['id'], 'org_name': item['name']}
-                    yield ret
-            except KeyError:
-                self.log("ptv FDW: Invalid JSON content")
-                ret = {'org_id': None, 'org_name': None}
-                yield ret
-        # Kaikki Varsinais-Suomen kuntien palvelut IDeineen
+        # Versio joka tulostaa kaikki VS-suomen ja satakunnan serviceIdt, servicenamet ja niihin kuuluvien serviceclass nimet!
         elif "/Service/list/area/Municipality/code/" in self.urlop:
             data2 = self.get_data2(quals, columns)
             li2 = list()
-            li3 = list()
             for item in data2['itemList'][1]['areas']:
                 koodit = [(j['code']) for j in item['municipalities']]
-                nimet = [(j['name']) for j in item['municipalities']]
                 for k in range(len(koodit)):
                     li2.append(koodit[k])
-                    li3.append(nimet[k][2]['value'])
             for u in range(len(li2)):
-                # testataan vain Uudenkaupungin servicien hakua eka JOS if aktiivinen, sisennykset kuntoon!
-                if li2[u] == '833' or li2[u] == '529' or li2[u] == '853' or li2[u] == '680':
-                    self.urlop = "https://api.palvelutietovaranto.suomi.fi/api/v11/Service/list/area/Municipality/code/" + str(
-                        li2[u])
+                self.urlop = "https://api.palvelutietovaranto.suomi.fi/api/v11/Service/list/area/Municipality/code/" + str(li2[u])
+                data = self.get_data(quals, columns)
+                ret = {}
+                pages = int(data['pageCount'])
+                for j in range(1, pages + 1):
+                    self.urlop = "https://api.palvelutietovaranto.suomi.fi/api/v11/Service/list/area/Municipality/code/" + str(li2[u]) + "?page=" + str(j)
                     data = self.get_data(quals, columns)
-                    ret = {}
-                    pages = int(data['pageCount'])
-                    for j in range(1, pages + 1):
-                        self.urlop = "https://api.palvelutietovaranto.suomi.fi/api/v11/Service/list/area/Municipality/code/" + str(
-                            li2[u]) + "?page=" + str(j)
-                        data = self.get_data(quals, columns)
-                        for item in data['itemList']:
-                            # self.log("taalla 1")
-                            li4 = list()
-                            li5 = list()
-                            for item3 in item['serviceChannels']:
-                                li4.append(item3['serviceChannel']['id'])
-                                li5.append(item3['serviceChannel']['name'])
-                            for d in range(len(li4)):
-                                try:
-                                    ret.update({'channel_id': li4[d]})
-                                except KeyError:
-                                    self.log("ptv FDW: Invalid JSON content")
-                                    ret.update({'channel_id': None})
-                                try:
-                                    ret.update({'channel_nimi': li5[d]})
-                                except KeyError:
-                                    self.log("ptv FDW: Invalid JSON content")
-                                    ret.update({'channel_nimi': None})
-                                try:
-                                    ret.update({'service_id': item['id']})
-                                except KeyError:
-                                    self.log("ptv FDW: Invalid JSON content")
-                                    ret.update({'service_id': None})
-                                try:
-                                    ret.update({'kunta_koodi': li2[u]})
-                                except KeyError:
-                                    self.log("ptv FDW: Invalid JSON content")
-                                    ret.update({'kunta_koodi': None})
-                                try:
-                                    ret.update({'kunta_nimi': li3[u]})
-                                except KeyError:
-                                    self.log("ptv FDW: Invalid JSON content")
-                                    ret.update({'kunta_nimi': None})
-                                try:
-                                    catli = [(t['value']) for t in item['serviceNames'] if t['language'] == "fi"]
-                                    for r in range(len(catli)):
+                    for item in data['itemList']:
+                            try:
+                                ret.update({'service_id': item['id']})
+                                #self.log(item['id'])
+                            except KeyError:
+                                self.log("ptv FDW: Invalid JSON content")
+                                ret.update({'service_id': None})
+                            try:
+                                luokat = list()
+                                if item.get('serviceClasses') == None:
+                                    self.log("ongelmia")
+                                    self.log(stop)
+                                else:
+                                    for item7 in item['serviceClasses']:
+                                        luokka = [(t['value']) for t in item7['name'] if t['language'] == "fi"][0]
+                                        luokat.append(luokka)
+                                    for r in range(len(luokat)):
                                         if r == 0:
-                                            catstr = catli[r]
+                                            luokstr = luokat[r]
                                         else:
-                                            catstr = catstr + ', ' + catli[r]
-                                    ret.update({'kategoria': catstr})
-                                    # vanha tapa, toimi myos jos listamuoto kelpaa
-                                    # ret.update({'kategoria': [(t['value']) for t in item['serviceNames']]})
-                                except KeyError:
-                                    self.log("ptv FDW: Invalid JSON content")
-                                    ret.update({'kategoria': None})
-                                yield ret
-        # yo. vastaavan voisi yrittaa koodata siten, etta hakee ServiceChannel/list/area/municipality
-        # ja lisaisi sen sisallot omaan foreign tableen jotka sitten liittaisi sqllla samaan tauluun?
+                                            luokstr = luokstr + ', ' + luokat[r]
+                                    ret.update({'serviceclass': luokstr})
+                            except KeyError:
+                                self.log("ptv FDW: Invalid JSON content")
+                                ret.update({'serviceclass': None})
+                            try:
+                                if item.get('serviceNames') == None:
+                                    self.log("ongelmia2")
+                                    self.log(stop)
+                                else:
+                                    nimet = [(t['value']) for t in item['serviceNames'] if t['language'] == "fi"]
+                                    for r in range(len(nimet)):
+                                        if r == 0:
+                                            nimistr = nimet[r]
+                                        else:
+                                            nimistr = nimistr + ', ' + nimet[r]
+                                    ret.update({'servicename': nimistr})
+                            except KeyError:
+                                self.log("ptv FDW: Invalid JSON content")
+                                ret.update({'servicename': None})
+                            yield ret
+        # VS-Suomen ja Satakunnan organisaatiolistaus
         elif "/Organization/list/area/Province/code/02" in self.urlop:
             try:
-                #
-                # ret = {'mun_id': data['itemList'][1]['id']}
-                # ret = {'mun_id': data['itemList'][1]['areas'][0]['municipalities'][0]['code']}
-                # yield ret
-                #
                 li = list()
                 nili = list()
                 for item in data['itemList'][1]['areas']:
-                    # ret = {}
                     koodit = [(j['code']) for j in item['municipalities']]
                     nimet = [(j['name']) for j in item['municipalities']]
-                    # nimet = [(j['value']) for j in item['name']]
-                    # kielet = [(j['language']) for j in item['name']]
                     for k in range(len(koodit)):
                         li.append(koodit[k])
                         nili.append(nimet[k][2]['value'])
-                        # listankin voi suoraan heittaa postgis tauluun
-                        # ret.update({'mun_id': li})
-                        # yield ret
                 ret = {}
                 for u in range(len(li)):
                     ret.update({'mun_id': li[u], 'mun_name_fi': nili[u]})
@@ -190,36 +141,191 @@ class ptvForeignDataWrapper(ForeignDataWrapper):
                 self.log("ptv FDW: Invalid JSON content")
                 ret = {'mun_id': None}
                 yield ret
-        # Tama on viela jaanne snowplowsta
+        # Oletusarvoinen toiminta, esim urlin https://api.palvelutietovaranto.suomi.fi/api/v11/ServiceChannel/list/area/Municipality/code/529?page=1 tiedot
+        # VAIHTOEHTOISESTI
+        # elif "/ServiceChannel/list/area/Municipality/code/" in self.urlop:
+        # ja elseen jotain muuta
         else:
-            for item in data:
+            data2 = self.get_data2(quals, columns)
+            li2 = list()
+            for item in data2['itemList'][1]['areas']:
+                koodit = [(j['code']) for j in item['municipalities']]
+                for k in range(len(koodit)):
+                    li2.append(koodit[k])
+                    # jos tarvii testata nopeasti jotain
+                    # if koodit[k]=='761':
+                    # li2.append(koodit[k])
+            for p in range(len(li2)):
+                self.urlop = "https://api.palvelutietovaranto.suomi.fi/api/v11/ServiceChannel/list/area/Municipality/code/" + str(
+                    li2[p])
+                data = self.get_data(quals, columns)
                 ret = {}
-                try:
-                    ret.update({'id': item['id']})
-                except KeyError:
-                    self.log("ptv FDW: Invalid JSON content")
-                    ret.update({'id': None})
-                try:
-                    ret.update({'machine_type': item['machine_type']})
-                except KeyError:
-                    self.log("ptv FDW: Invalid JSON content")
-                    ret.update({'machine_type': None})
-                try:
-                    ret.update({'last_timestamp': item['last_location']['timestamp']})
-                except KeyError:
-                    self.log("ptv FDW: Invalid JSON content")
-                    ret.update({'last_timestamp': None})
-                try:
-                    ret.update({'last_coords': item['last_location']['coords']})
-                except KeyError:
-                    self.log("ptv FDW: Invalid JSON content")
-                    ret.update({'last_coords': None})
-                try:
-                    ret.update({'last_events': item['last_location']['events']})
-                except KeyError:
-                    self.log("ptv FDW: Invalid JSON content")
-                    ret.update({'last_events': None})
-                yield ret
+                pages = int(data['pageCount'])
+                for l in range(1, pages + 1):
+                    self.urlop = "https://api.palvelutietovaranto.suomi.fi/api/v11/ServiceChannel/list/area/Municipality/code/" + str(
+                        li2[p]) + "?page=" + str(l)
+                    data = self.get_data(quals, columns)
+                    for item in data['itemList']:
+                        # self.log("taalla 1")
+                        if item['serviceChannelType'] == "ServiceLocation":
+                            # servicejen nimet
+                            try:
+                                seidli = [(s['service']['name']) for s in item['services']]
+                            except:
+                                seidli = ["No data available."]
+                            # palvelupisteen nimi
+                            try:
+                                nimi = [(t['value']) for t in item['serviceChannelNames'] if t['language'] == "fi"][0]
+                            except:
+                                nimi = "No data available."
+                            # koordinaatit ja osoite
+                            for item2 in item['addresses']:
+                                if item2['type'] == "Location":
+                                    try:
+                                        lat = item2['streetAddress']['latitude']
+                                    except:
+                                        lat = None
+                                    try:
+                                        lon = item2['streetAddress']['longitude']
+                                    except:
+                                        lon = None
+                                    try:
+                                        postinro = item2['streetAddress']['postalCode']
+                                    except:
+                                        postinro = "ei"
+                                    try:
+                                        katunum = item2['streetAddress']['streetNumber']
+                                    except:
+                                        katunum = "ei"
+                                    try:
+                                        katu = [(h['value']) for h in item2['streetAddress']['street'] if
+                                                h['language'] == "fi"][0]
+                                    except:
+                                        katu = "ei"
+                                    try:
+                                        postipaik = [(h['value']) for h in item2['streetAddress']['postOffice'] if
+                                                     h['language'] == "fi"][0]
+                                    except:
+                                        postipaik = "ei"
+                                    if katu != "ei" and katunum != "ei" and postinro != "ei" and postipaik != "ei":
+                                        osoite = katu + ' ' + katunum + ', ' + postinro + ' ' + postipaik
+                                    else:
+                                        self.log("Incomplete address information available.")
+                                        osoite = "No data available."
+                            puhli1 = [s['prefixNumber'] for s in item['phoneNumbers'] if
+                                      isinstance(s['prefixNumber'], str)]
+                            puhli2 = [s['number'] for s in item['phoneNumbers'] if isinstance(s['number'], str)]
+                            if len(puhli1) == len(puhli2):
+                                puhli = [m + str(n) for m, n in zip(puhli1, puhli2)]
+                            else:
+                                puhli = []
+                            if len(puhli) == 0:
+                                puhstr = "No data available."
+                            else:
+                                for b in range(len(puhli)):
+                                    if b == 0:
+                                        puhstr = puhli[b]
+                                    else:
+                                        puhstr = puhstr + '; ' + puhli[b]
+                            # spostiosoitteet
+                            mailli = [(s['value']) for s in item['emails'] if
+                                      (s['language'] == "fi" and isinstance(s['value'], str))]
+                            if len(mailli) == 0:
+                                mailstr = "No data available."
+                            else:
+                                for c in range(len(mailli)):
+                                    if c == 0:
+                                        mailstr = mailli[c]
+                                    else:
+                                        mailstr = mailstr + '; ' + mailli[c]
+                            # verkkosivut
+                            webli = [(r['url']) for r in item['webPages'] if (r['language'] == "fi" and isinstance(r['url'], str))]
+                            if len(webli) == 0:
+                                webstr = "No data available."
+                            else:
+                                for c in range(len(webli)):
+                                    if c == 0:
+                                        webstr = webli[c]
+                                    else:
+                                        webstr = webstr + '; ' + webli[c]
+                            # aukioloajat
+                            ttt = 1
+                            for item3 in item['serviceHours']:
+                                if item3['serviceHourType'] == "DaysOfTheWeek":
+                                    ttt = 2
+                                    paiva1 = [(h['dayFrom']) for h in item3['openingHour']]
+                                    paiva2 = [(h['dayTo']) for h in item3['openingHour']]
+                                    tunti1 = [(h['from']) for h in item3['openingHour']]
+                                    tunti2 = [(h['to']) for h in item3['openingHour']]
+                            if ttt == 1 or (len({len(e) for e in [paiva1, paiva2, tunti1, tunti2]}) != 1):
+                                self.log("Incomplete opening hour information available.")
+                                aukistr = "No data available."
+                            else:
+                                for d in range(len(tunti1)):
+                                    if isinstance(paiva1[d], str) and isinstance(paiva2[d], str) and isinstance(
+                                            tunti1[d], str) and isinstance(tunti2[d], str):
+                                        if d == 0:
+                                            aukistr = paiva1[d] + '-' + paiva2[d] + ': ' + tunti1[d] + '-' + tunti2[d]
+                                        else:
+                                            aukistr = aukistr + '; ' + (
+                                                        paiva1[d] + '-' + paiva2[d] + ': ' + tunti1[d] + '-' + tunti2[
+                                                    d])
+                                    else:
+                                        self.log("Incomplete opening hour information available (2).")
+                                        aukistr = "No data available."
+                            # taulun paivitys
+                            try:
+                                ret.update({'orig_id': item['id']})
+                            except KeyError:
+                                self.log("ptv FDW: Invalid JSON content")
+                                ret.update({'orig_id': None})
+                            try:
+                                ret.update({'palvelut': seidli})
+                            except KeyError:
+                                self.log("ptv FDW: Invalid JSON content")
+                                ret.update({'palvelut': None})
+                            try:
+                                ret.update({'kohteen_nimi': nimi})
+                            except KeyError:
+                                self.log("ptv FDW: Invalid JSON content")
+                                ret.update({'kohteen_nimi': None})
+                            try:
+                                ret.update({'latitude': lat})
+                            except KeyError:
+                                self.log("ptv FDW: Invalid JSON content")
+                                ret.update({'latitude': None})
+                            try:
+                                ret.update({'longitude': lon})
+                            except KeyError:
+                                self.log("ptv FDW: Invalid JSON content")
+                                ret.update({'longitude': None})
+                            try:
+                                ret.update({'osoite': osoite})
+                            except KeyError:
+                                self.log("ptv FDW: Invalid JSON content")
+                                ret.update({'osoite': None})
+                            try:
+                                ret.update({'puhelinnumero': puhstr})
+                            except KeyError:
+                                self.log("ptv FDW: Invalid JSON content")
+                                ret.update({'puhelinnumero': None})
+                            try:
+                                ret.update({'sahkoposti': mailstr})
+                            except KeyError:
+                                self.log("ptv FDW: Invalid JSON content")
+                                ret.update({'sahkoposti': None})
+                            try:
+                                ret.update({'verkkosivu': webstr})
+                            except KeyError:
+                                self.log("ptv FDW: Invalid JSON content")
+                                ret.update({'verkkosivu': None})
+                            try:
+                                ret.update({'aukioloajat': aukistr})
+                            except KeyError:
+                                self.log("ptv FDW: Invalid JSON content")
+                                ret.update({'aukioloajat': None})
+                            yield ret
+
 
     def get_data(self, quals, columns):
         url = self.urlop
