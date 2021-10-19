@@ -21,16 +21,5 @@ services:
     healthcheck:
       test: "exit 0"
 
-  pgadmin:
-    image: dpage/pgadmin4:4.27
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=no@email.service
-      - PGADMIN_DEFAULT_PASSWORD=vslpass
-    depends_on:
-      - postgis-db
-    ports:
-      - 5000:80
-    restart: unless-stopped
-
 volumes:
   fdw-db-data:
