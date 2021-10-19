@@ -172,12 +172,12 @@ class ptvForeignDataWrapper(ForeignDataWrapper):
                             try:
                                 seidli = [(s['service']['name']) for s in item['services']]
                             except:
-                                seidli = ["No data available."]
+                                seidli = ["-"]
                             # palvelupisteen nimi
                             try:
                                 nimi = [(t['value']) for t in item['serviceChannelNames'] if t['language'] == "fi"][0]
                             except:
-                                nimi = "No data available."
+                                nimi = "-"
                             # koordinaatit ja osoite
                             for item2 in item['addresses']:
                                 if item2['type'] == "Location":
@@ -211,7 +211,7 @@ class ptvForeignDataWrapper(ForeignDataWrapper):
                                         osoite = katu + ' ' + katunum + ', ' + postinro + ' ' + postipaik
                                     else:
                                         self.log("Incomplete address information available.")
-                                        osoite = "No data available."
+                                        osoite = "-"
                             puhli1 = [s['prefixNumber'] for s in item['phoneNumbers'] if
                                       isinstance(s['prefixNumber'], str)]
                             puhli2 = [s['number'] for s in item['phoneNumbers'] if isinstance(s['number'], str)]
@@ -220,7 +220,7 @@ class ptvForeignDataWrapper(ForeignDataWrapper):
                             else:
                                 puhli = []
                             if len(puhli) == 0:
-                                puhstr = "No data available."
+                                puhstr = "-"
                             else:
                                 for b in range(len(puhli)):
                                     if b == 0:
@@ -231,7 +231,7 @@ class ptvForeignDataWrapper(ForeignDataWrapper):
                             mailli = [(s['value']) for s in item['emails'] if
                                       (s['language'] == "fi" and isinstance(s['value'], str))]
                             if len(mailli) == 0:
-                                mailstr = "No data available."
+                                mailstr = "-"
                             else:
                                 for c in range(len(mailli)):
                                     if c == 0:
@@ -241,7 +241,7 @@ class ptvForeignDataWrapper(ForeignDataWrapper):
                             # verkkosivut
                             webli = [(r['url']) for r in item['webPages'] if (r['language'] == "fi" and isinstance(r['url'], str))]
                             if len(webli) == 0:
-                                webstr = "No data available."
+                                webstr = "-"
                             else:
                                 for c in range(len(webli)):
                                     if c == 0:
@@ -251,15 +251,16 @@ class ptvForeignDataWrapper(ForeignDataWrapper):
                             # aukioloajat
                             ttt = 1
                             for item3 in item['serviceHours']:
+                                ttt = 2
                                 if item3['serviceHourType'] == "DaysOfTheWeek":
-                                    ttt = 2
+                                    ttt = 3
                                     paiva1 = [(h['dayFrom']) for h in item3['openingHour']]
                                     paiva2 = [(h['dayTo']) for h in item3['openingHour']]
                                     tunti1 = [(h['from']) for h in item3['openingHour']]
                                     tunti2 = [(h['to']) for h in item3['openingHour']]
                             if ttt == 1 or (len({len(e) for e in [paiva1, paiva2, tunti1, tunti2]}) != 1):
                                 self.log("Incomplete opening hour information available.")
-                                aukistr = "No data available."
+                                aukistr = "-"
                             else:
                                 for d in range(len(tunti1)):
                                     if isinstance(paiva1[d], str) and isinstance(paiva2[d], str) and isinstance(
@@ -267,12 +268,10 @@ class ptvForeignDataWrapper(ForeignDataWrapper):
                                         if d == 0:
                                             aukistr = paiva1[d] + '-' + paiva2[d] + ': ' + tunti1[d] + '-' + tunti2[d]
                                         else:
-                                            aukistr = aukistr + '; ' + (
-                                                        paiva1[d] + '-' + paiva2[d] + ': ' + tunti1[d] + '-' + tunti2[
-                                                    d])
+                                            aukistr = aukistr + '; ' + (paiva1[d] + '-' + paiva2[d] + ': ' + tunti1[d] + '-' + tunti2[d])
                                     else:
                                         self.log("Incomplete opening hour information available (2).")
-                                        aukistr = "No data available."
+                                        aukistr = "-"
                             # taulun paivitys
                             try:
                                 ret.update({'orig_id': item['id']})
