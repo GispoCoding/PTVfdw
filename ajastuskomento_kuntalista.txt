@@ -1,0 +1,25 @@
+SELECT cron.schedule('*/1 * * * *',  $$DROP SERVER IF EXISTS dev_fdw CASCADE;
+DROP FOREIGN TABLE IF EXISTS kunnatforeign;
+DROP TABLE IF EXISTS kunnat;
+
+CREATE SERVER dev_fdw FOREIGN DATA WRAPPER multicorn OPTIONS ( wrapper 'ptvfdw.ptvForeignDataWrapper' );
+
+CREATE FOREIGN TABLE kunnatforeign(
+	code varchar,
+	names_fi varchar,
+	names_sv varchar,
+	names_en varchar
+	) server dev_fdw options(
+	url 'https://api.palvelutietovaranto.suomi.fi/api/v11/CodeList/GetMunicipalityCodes');
+
+CREATE TABLE kunnat(
+  code varchar,
+  names_fi varchar,
+  names_sv varchar,
+  names_en varchar
+);
+
+INSERT INTO kunnat(
+	code, names_fi, names_sv, names_en)
+SELECT code, names_fi, names_sv, names_en
+FROM kunnatforeign;$$);
