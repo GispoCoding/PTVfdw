@@ -1,4 +1,4 @@
-SELECT cron.schedule('25 */1 * * *',  $$DROP SERVER IF EXISTS dev_fdw CASCADE;
+SELECT cron.schedule('00 */1 * * *',  $$DROP SERVER IF EXISTS dev_fdw CASCADE;
 DROP FOREIGN TABLE IF EXISTS ptvforeign;
 DROP TABLE IF EXISTS ptvdata;
 DROP TABLE IF EXISTS ptv_latest;
