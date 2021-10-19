@@ -25,7 +25,7 @@ services:
     image: dpage/pgadmin4:4.27
     environment:
       - PGADMIN_DEFAULT_EMAIL=no@email.service
-      - PGADMIN_DEFAULT_PASSWORD=testpass
+      - PGADMIN_DEFAULT_PASSWORD=vslpass
     depends_on:
       - postgis-db
     ports:
