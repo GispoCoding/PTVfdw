@@ -1,0 +1,33 @@
+create function kunnatupdate()
+returns void
+language plpgsql
+as
+$$
+begin
+ drop server if exists dev_fdw cascade;
+ drop foreign table if exists kunnatforeign;
+ drop table if exists kunnat;
+
+ create server dev_fdw foreign data wrapper multicorn options ( wrapper 'ptvfdw.ptvForeignDataWrapper' );
+
+ create foreign table kunnatforeign(
+  code varchar,
+  names_fi varchar,
+  names_sv varchar,
+  names_en varchar
+  ) server dev_fdw options(
+  url 'https://api.palvelutietovaranto.suomi.fi/api/v11/CodeList/GetMunicipalityCodes');
+
+ create table kunnat(
+  code varchar,
+  names_fi varchar,
+  names_sv varchar,
+  names_en varchar
+ );
+
+ insert into kunnat(code, names_fi, names_sv, names_en) select code, names_fi, names_sv, names_en from kunnatforeign;
+ 
+ drop foreign table if exists kunnatforeign;
+
+end;
+$$;
