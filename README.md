@@ -25,24 +25,27 @@ Stop database with `docker-compose stop` and start it next time with `docker-com
 
 # Usage
 
-Run `docker-compose exec postgis-db psql -h localhost -U <username> -d <database-name>` to open the psql terminal from
-your Linux server. From psql terminal you can execute SQL queries like `SELECT * FROM kunnat` or schedule jobs via pg_cron.
+Go to the correct folder if you are not there already (`cd PTVfdw`). Run `docker-compose exec postgis-db psql -h localhost -U <username> -d <database-name>` to open the psql terminal from
+your Linux server. From psql terminal you can execute SQL queries like `SELECT * FROM kunnat;` or schedule jobs via pg_cron.
 
 The basic syntax  for scheduling task to be run, e.g. once in every minute, goes as
 
-`SELECT cron.schedule('*/1 * * * *',  $$<SQL-commands-you-wish-to-execute>$$`.
+`SELECT cron.schedule('*/1 * * * *',  $$<SQL-commands-you-wish-to-execute>$$);`.
 
 Naturally the execution frequency can be easily altered. The schedule uses the standard cron syntax, in which *
 means "run every time period", / determines a "time step size" and a specific number means "but only at this time".
 See [crontab_guru](https://crontab.guru/) for more help.
 
-You can list the scheduled jobs with `SELECT * FROM cron.job`.
+You can list the scheduled jobs with `SELECT * FROM cron.job;`.
 
 To take a closer look on some jobs progress, run `SELECT * FROM cron.job_run_details WHERE jobid=<job-id>;`.
 
 You can unschedule a certain task by running `SELECT cron.unschedule(<job-id>);`.
 
 > Note that the scheduled jobs will keep on running until you unschedule them!
+
+> Note also that running `docker-compose stop` or `docker-compose down` will lead to the failure of the
+> scheduled tasks unless you restart the docker container before the execution time of the scheduled task comes!
 
 ## Scheduling via calling plpgsql function
 
