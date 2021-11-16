@@ -2,6 +2,8 @@
 
 PostgreSQL Foreign Data Wrapper for JSON API by Digi- ja väestötietoviraston palvelutietovaranto.
 
+Sponsors: Lounaistieto, Varsinais-Suomen liitto.
+
 Inspired greatly by [geofdw](https://github.com/bosth/geofdw) and [snowplow_fdw](https://github.com/GispoCoding/snowplow_fdw).
 
 # Installation
