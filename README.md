@@ -105,6 +105,8 @@ If you wish to execute a test run, we recommend to use kunnatupdate.txt since it
 to that, running a scheduled job executing ptvupdate function takes around 20 minutes. Naturally the performance
 would get much better if the area of interest would be smaller.
 
+If you wish to delete a plpgsql function you have created earlier (e.g. kunnatupdate), just run `DROP function kunnatupdate();`.
+
 ## Scheduling without plpgsql functions
 
 The usage of plpgsql functions is not necessary. If you wish, you can also alter the SQL commands directly into the
