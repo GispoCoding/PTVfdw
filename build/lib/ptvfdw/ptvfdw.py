@@ -249,29 +249,33 @@ class ptvForeignDataWrapper(ForeignDataWrapper):
                                     else:
                                         webstr = webstr + '; ' + webli[c]
                             # aukioloajat
-                            ttt = 1
+                            #ttt = 1
+                            aukistr = "-"
                             for item3 in item['serviceHours']:
-                                ttt = 2
+                                #ttt = 2
                                 if item3['serviceHourType'] == "DaysOfTheWeek":
-                                    ttt = 3
+                                    #ttt = 3
                                     paiva1 = [(h['dayFrom']) for h in item3['openingHour']]
                                     paiva2 = [(h['dayTo']) for h in item3['openingHour']]
                                     tunti1 = [(h['from']) for h in item3['openingHour']]
                                     tunti2 = [(h['to']) for h in item3['openingHour']]
-                            if ttt == 1 or (len({len(e) for e in [paiva1, paiva2, tunti1, tunti2]}) != 1):
-                                self.log("Incomplete opening hour information available.")
-                                aukistr = "-"
-                            else:
-                                for d in range(len(tunti1)):
-                                    if isinstance(paiva1[d], str) and isinstance(paiva2[d], str) and isinstance(
-                                            tunti1[d], str) and isinstance(tunti2[d], str):
-                                        if d == 0:
-                                            aukistr = paiva1[d] + '-' + paiva2[d] + ': ' + tunti1[d] + '-' + tunti2[d]
-                                        else:
-                                            aukistr = aukistr + '; ' + (paiva1[d] + '-' + paiva2[d] + ': ' + tunti1[d] + '-' + tunti2[d])
+                            #if ttt == 1 or (len({len(e) for e in [paiva1, paiva2, tunti1, tunti2]}) != 1):
+                                #self.log("Incomplete opening hour information available.")
+                            #else:
+                            # seuraavia riveja sisallytetty yksi tab vahemman kuin oli
+                            for d in range(len(tunti1)):
+                                if isinstance(paiva1[d], str) and isinstance(paiva2[d], str) and isinstance(
+                                        tunti1[d], str) and isinstance(tunti2[d], str):
+                                    if d == 0:
+                                        aukistr = paiva1[d] + '-' + paiva2[d] + ': ' + tunti1[d] + '-' + tunti2[d]
                                     else:
-                                        self.log("Incomplete opening hour information available (2).")
-                                        aukistr = "-"
+                                        aukistr = aukistr + '; ' + (paiva1[d] + '-' + paiva2[d] + ': ' + tunti1[d] + '-' + tunti2[d])
+                                    #else:
+                                        #self.log("Incomplete opening hour information available (2).")
+                                        #aukistr = "-"
+                            # yksinkertaisempi lisays
+                            if aukistr == "-":
+                                self.log("Incomplete opening hour information available.")
                             # taulun paivitys
                             try:
                                 ret.update({'orig_id': item['id']})
