@@ -11,7 +11,6 @@ RUN apt-get update \
     python3-dev \
     python3-setuptools \
     python3-pip \
-    #pgxnclient \
     build-essential \
     libreadline-dev \
     zlib1g-dev \
@@ -25,10 +24,7 @@ RUN apt-get update \
     postgresql-12-cron \
     && apt clean
 
-#RUN pip3 install -q setuptools
-
 # Install Multicorn for Foreign Data Wrappers
-#RUN pgxn install multicorn
 RUN wget https://github.com/pgsql-io/multicorn2/archive/refs/tags/v2.3.tar.gz \
     && tar -xvf v2.3.tar.gz \
     && cd multicorn2-2.3 \
