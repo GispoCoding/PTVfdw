@@ -18,7 +18,7 @@ setup(
     classifiers=[
     ],
     install_requires=[
-        "multicorn>=1.3.4.dev0",
+        "multicorn>=2.3",
         "requests>=2.22.0",
         "plpygis>=0.1.0"
     ],
