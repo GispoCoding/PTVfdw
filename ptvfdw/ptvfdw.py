@@ -265,6 +265,7 @@ class ptvForeignDataWrapper(ForeignDataWrapper):
                                         aukistr = aukistr + '; ' + (paiva1[d] + '-' + paiva2[d] + ': ' + tunti1[d] + '-' + tunti2[d])
                             if aukistr == "-":
                                 self.log("Incomplete opening hour information available.")
+                            aukistr = str(aukistr).replace("-:", ":")
                             # taulun paivitys
                             try:
                                 ret.update({'orig_id': item['id']})
