@@ -250,12 +250,16 @@ class ptvForeignDataWrapper(ForeignDataWrapper):
                                         webstr = webstr + '; ' + webli[c]
                             # aukioloajat
                             aukistr = "-"
+                            paiva1 = []
+                            paiva2 = []
+                            tunti1 = []
+                            tunti2 = []
                             for item3 in item['serviceHours']:
                                 if item3['serviceHourType'] == "DaysOfTheWeek":
-                                    paiva1 = [(h['dayFrom']) for h in item3['openingHour']]
-                                    paiva2 = [(h['dayTo']) for h in item3['openingHour']]
-                                    tunti1 = [(h['from']) for h in item3['openingHour']]
-                                    tunti2 = [(h['to']) for h in item3['openingHour']]
+                                    paiva1 += [(h['dayFrom']) for h in item3['openingHour']]
+                                    paiva2 += [(h['dayTo']) for h in item3['openingHour']]
+                                    tunti1 += [(h['from']) for h in item3['openingHour']]
+                                    tunti2 += [(h['to']) for h in item3['openingHour']]
                             for d in range(len(tunti1)):
                                 if isinstance(paiva1[d], str) and isinstance(paiva2[d], str) and isinstance(
                                         tunti1[d], str) and isinstance(tunti2[d], str):
